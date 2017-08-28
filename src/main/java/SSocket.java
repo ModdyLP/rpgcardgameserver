@@ -1,8 +1,8 @@
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SSocket implements Runnable {
     private Socket socket;
@@ -20,20 +20,24 @@ public class SSocket implements Runnable {
                 InputStream in = socket.getInputStream();
                 OutputStream out = socket.getOutputStream();
 
-                DataInputStream dIn = new DataInputStream(in);
-                DataOutputStream dOut = new DataOutputStream(out);
+
+                ObjectOutputStream mapOutputStream = new ObjectOutputStream(out);
+                ObjectInputStream mapInputStream = new ObjectInputStream(in);
 
 
-                String line = null;
+                HashMap<String, String> map = null;
                 while (true) {
-                    line = dIn.readUTF();
-                    System.out.println("Request: " + line);
-                    dOut.writeUTF("\nResponse: 200");
-                    dOut.flush();
+                    Thread.sleep(100);
+                    map = (HashMap<String, String>)mapInputStream.readObject();
+                    System.out.println("Request: " + Arrays.toString(map.keySet().toArray())+ Arrays.toString(map.values().toArray()));
+                    map.put("status", "200");
+                    mapOutputStream.writeObject(map);
+                    mapOutputStream.flush();
                 }
             }
         } catch (Exception e) {
             Main.clients.remove(socket);
+            System.out.println(e.getMessage());
         }
     }
 }
