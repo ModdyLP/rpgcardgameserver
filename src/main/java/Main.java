@@ -15,7 +15,7 @@ public class Main {
     private static PriorityQueue<Object> socketMap;
     public static ObservableList<Socket> clients = FXCollections.observableArrayList();
     public static ObservableMap<String, SSocket> clientwithid = FXCollections.observableHashMap();
-    private static HashMap<String, JSONObject> lobbydata = new HashMap<>();
+    public static HashMap<String, JSONObject> lobbydata = new HashMap<>();
     private static ServerSocket ss;
 
     public static void main(String[] args) {
@@ -44,7 +44,7 @@ public class Main {
         });
         int port = 666; //random port number
         try {
-
+            Game.getInstance().startLobbyListener();
             ss = new ServerSocket(port);
             System.out.println("Waiting for a client....");
 
@@ -68,6 +68,7 @@ public class Main {
             e.printStackTrace();
         }
     }
+
     public static JSONObject getLobbyData(String lobbyid) {
         if (lobbydata.containsKey(lobbyid)) {
             return lobbydata.get(lobbyid);
@@ -77,22 +78,33 @@ public class Main {
             return dataobject;
         }
     }
+
     public static void addSocketwithid(String id, SSocket socket) {
         clientwithid.put(id, socket);
     }
+
     public static SSocket getSocketwithid(String id) {
         return clientwithid.get(id);
     }
+
     public static void senddatatosocket(String id, String clientid) {
         JSONObject data = getLobbyData(id);
         if (data.has("client1") && clientid.equals(data.getString("client1"))) {
-            clientwithid.get(data.getString("client2")).senddata(data.getString("client2"), "disconnect");
-            clientwithid.remove(clientid);
-            lobbydata.remove(id);
+            if (data.has("client2")) {
+                clientwithid.get(data.getString("client2")).senddata(data.getString("client2"), "disconnect");
+                clientwithid.remove(clientid);
+                lobbydata.remove(id);
+            } else {
+                System.out.println("Client is already disconnected");
+            }
         } else if (data.has("client2") && clientid.equals(data.getString("client2"))) {
-            clientwithid.get(data.getString("client1")).senddata(data.getString("client1"), "disconnect");
-            clientwithid.remove(clientid);
-            lobbydata.remove(id);
+            if (data.has("client1")) {
+                clientwithid.get(data.getString("client1")).senddata(data.getString("client1"), "disconnect");
+                clientwithid.remove(clientid);
+                lobbydata.remove(id);
+            } else {
+                System.out.println("Client is already disconnected");
+            }
         }
     }
 }

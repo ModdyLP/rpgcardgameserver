@@ -13,10 +13,10 @@ public class SSocket implements Runnable {
     private JSONObject sendjson = new JSONObject();
     private String clientid;
     private String lobbyid;
-    InputStream in;
-    OutputStream out;
-    PrintWriter outstr;
-    BufferedReader instr;
+    private InputStream in;
+    private OutputStream out;
+    private PrintWriter outstr;
+    private BufferedReader instr;
 
     public SSocket(Socket socket) {
         this.instance = this;
@@ -33,9 +33,7 @@ public class SSocket implements Runnable {
                 out = socket.getOutputStream();
                 outstr = new PrintWriter(out);
                 instr = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-
-
-                System.out.println("Socket init and connected");
+                System.out.println("Client established connection: "+this);
                 while (true) {
                     Thread.sleep(200);
                     String line = instr.readLine();
@@ -66,7 +64,6 @@ public class SSocket implements Runnable {
                         }
                     }
                     sendjson.put("status", 200);
-                    System.out.println("Response: " + sendjson.toString());
                     outstr.println(sendjson.toString());
                     outstr.flush();
                 }
