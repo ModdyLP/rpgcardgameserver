@@ -1,7 +1,4 @@
-import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
-import javafx.collections.ObservableMap;
+import javafx.collections.*;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -15,7 +12,7 @@ public class Main {
     private static PriorityQueue<Object> socketMap;
     public static ObservableList<Socket> clients = FXCollections.observableArrayList();
     public static ObservableMap<String, SSocket> clientwithid = FXCollections.observableHashMap();
-    public static HashMap<String, JSONObject> lobbydata = new HashMap<>();
+    public static ObservableMap<String, JSONObject> lobbydata = FXCollections.observableHashMap();
     private static ServerSocket ss;
 
     public static void main(String[] args) {
@@ -42,6 +39,15 @@ public class Main {
             }
 
         });
+        lobbydata.addListener((MapChangeListener<String, JSONObject>) change -> {
+            if (change.wasAdded()) {
+                System.out.println("New Lobby identified: " + change.getKey());
+            } else if (change.wasRemoved()){
+                System.out.println("Lobby has Lost all Players: "+change.getKey());
+            } else {
+                System.out.println("something else happend: "+change.getKey());
+            }
+        });
         int port = 666; //random port number
         try {
             Game.getInstance().startLobbyListener();
@@ -53,13 +59,9 @@ public class Main {
                 Socket socket = ss.accept();
                 if (socket != null && socket.isConnected()) {
                     clients.add(socket);
-                }
-                for (Socket client : clients) {
-                    if (socket != null && socket.isConnected()) {
-                        SSocket sSocket = new SSocket(client);
-                        Thread t = new Thread(sSocket);
-                        t.start();
-                    }
+                    SSocket sSocket = new SSocket(socket);
+                    Thread t = new Thread(sSocket);
+                    t.start();
                 }
             }
 
@@ -92,19 +94,19 @@ public class Main {
         if (data.has("client1") && clientid.equals(data.getString("client1"))) {
             if (data.has("client2")) {
                 clientwithid.get(data.getString("client2")).senddata(data.getString("client2"), "disconnect");
-                clientwithid.remove(clientid);
-                lobbydata.remove(id);
             } else {
-                System.out.println("Client is already disconnected");
+                System.out.println("Client 1 disconnect Request: Client 2 is already disconnected");
             }
+            clientwithid.remove(clientid);
+            lobbydata.get(id).remove("client1");
         } else if (data.has("client2") && clientid.equals(data.getString("client2"))) {
             if (data.has("client1")) {
                 clientwithid.get(data.getString("client1")).senddata(data.getString("client1"), "disconnect");
-                clientwithid.remove(clientid);
-                lobbydata.remove(id);
             } else {
-                System.out.println("Client is already disconnected");
+                System.out.println("Client 2 disconnect Request: Client 1 is already disconnected");
             }
+            clientwithid.remove(clientid);
+            lobbydata.get(id).remove("client2");
         }
     }
 }
